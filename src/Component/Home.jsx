@@ -1,19 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom"; // Nếu bạn có dùng React Router
+import { useNavigate } from "react-router-dom";
+
 import anh1 from "../assets/anh1.webp";
 import anh2 from "../assets/anh2.webp";
 import anh3 from "../assets/anh3.webp";
 import anh4 from "../assets/anh4.webp";
 import "./Home.css";
-
-/** Thêm import zod & react-confetti **/
 import { z } from "zod";
 import Confetti from "react-confetti";
 
-/** Định nghĩa schema cho form đặt hàng:
-    - name, address, phone đều là string, không được bỏ trống.
-    - phone có regex kiểm tra phải là chữ số (đơn giản). 
-**/
 const orderSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập tên người nhận."),
   address: z.string().min(1, "Vui lòng nhập địa chỉ."),
@@ -23,33 +18,33 @@ const orderSchema = z.object({
     .regex(/^[0-9]+$/, "Số điện thoại không hợp lệ (chỉ chứa chữ số)."),
 });
 
-// advertising text change in navbar
 const arrAdvertising = [
   "Shop now before it's too late :)",
   "Free shipping on orders above 500.000 VND",
 ];
 
+// Danh sách coffee
 const arrCoffee = [
   {
     nameProduct: "Default Route",
     price: ["300.000 VND", "450.000 VND"],
     Image: anh1,
     Size: ["8OZ", "12OZ"],
-    Note: "100% Natural notes of Berries, Chocolate, & Caramel! This coffee has strong berry notes with a sweet caramel finish. Scoring 85+. ",
+    Note: "100% Natural notes of Berries, Chocolate, & Caramel! This coffee has strong berry notes with a sweet caramel finish. Scoring 85+.",
   },
   {
     nameProduct: "On-call",
     price: ["300.000 VND", "450.000 VND"],
     Image: anh2,
     Size: ["8OZ", "12OZ"],
-    Note: "100% Natural notes Cocoa, Cherry, and Maple Syrup! High quality single origin scoring 85+. ",
+    Note: "100% Natural notes Cocoa, Cherry, and Maple Syrup! High quality single origin scoring 85+.",
   },
   {
     nameProduct: "200 OK",
     price: ["300.000 VND", "450.000 VND"],
     Image: anh3,
     Size: ["8OZ", "12OZ"],
-    Note: "Caramlized Honey, Chocolate, brown sugar - an excellent morning cup of coffee. ",
+    Note: "Caramlized Honey, Chocolate, brown sugar - an excellent morning cup of coffee.",
   },
   {
     nameProduct: "Sudo",
@@ -60,7 +55,6 @@ const arrCoffee = [
   },
 ];
 
-// Component hiển thị mỗi sản phẩm ở homepage
 function ProductCard({ coffee }) {
   const [isOpen, setIsOpen] = useState(false);
   const toggleDetails = () => {
@@ -99,20 +93,19 @@ function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const productListRef = useRef(null);
 
-  // State để mở Form đặt hàng
+  // State mở Form đặt hàng
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
 
-  // State để mở/đóng modal xác nhận cuối cùng
+  // State mở/đóng modal xác nhận
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-  // State để hiển thị thông báo đặt hàng thành công (và hiệu ứng pháo hoa)
+  // State hiển thị đặt hàng thành công
   const [orderSuccess, setOrderSuccess] = useState(false);
 
-  // State cho bật/tắt Confetti
+  // Bật/tắt Confetti
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Tạo state cho thông tin sản phẩm + số lượng
-  // Vì mỗi sản phẩm có 2 size => "quantities" sẽ là 1 mảng [qtySize0, qtySize1]
+  // Tạo giỏ hàng (cart): cho mỗi sp (arrCoffee) => { quantities: [0,0] }
   const [cart, setCart] = useState(
     arrCoffee.map(() => ({ quantities: [0, 0] }))
   );
@@ -124,13 +117,11 @@ function Home() {
     phone: "",
   });
 
-  // State lưu lỗi validate (nếu có)
+  // Lỗi validate
   const [formErrors, setFormErrors] = useState([]);
 
-  // Để chuyển trang (nếu dùng React Router)
   const navigate = useNavigate();
 
-  // Quảng cáo chạy tự động
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % arrAdvertising.length);
@@ -138,21 +129,13 @@ function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Xử lý mỗi lần orderSuccess = true => cho pháo hoa, rồi 3s sau tắt, chuyển về trang chủ
   useEffect(() => {
     if (orderSuccess) {
-      // Bật confetti
       setShowConfetti(true);
-
-      // Tắt confetti và chuyển về homepage sau 3s
       const timer = setTimeout(() => {
         setShowConfetti(false);
-        // Chuyển về trang chủ (nếu bạn đang ở Home rồi thì tuỳ ý,
-        // có thể scrollTo top hoặc reload,...)
         navigate("/");
       }, 3000);
-
-      // Dọn dẹp khi unmount
       return () => clearTimeout(timer);
     }
   }, [orderSuccess, navigate]);
@@ -162,33 +145,36 @@ function Home() {
       prevIndex === 0 ? arrAdvertising.length - 1 : prevIndex - 1
     );
   };
-
   const handleNextClick = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % arrAdvertising.length);
   };
 
+  // Scroll tới danh sách sp
   const handleShopCoffeeClick = () => {
     productListRef.current.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Xử lý mở Form đặt hàng
+  // Mở form đặt hàng
   const handleOrderNowClick = () => {
     setIsOrderFormOpen(true);
-    setOrderSuccess(false); // Reset
+    setOrderSuccess(false);
   };
 
-  // Tính tổng số lượng và tổng tiền
+  // Tính tổng số lượng
   const getTotalQuantity = () => {
-    return cart.reduce((acc, item) => {
-      return acc + item.quantities.reduce((a, b) => a + b, 0);
-    }, 0);
+    return cart.reduce(
+      (acc, item) => acc + item.quantities.reduce((a, b) => a + b, 0),
+      0
+    );
   };
 
+  // Tính tổng tiền
   const getTotalPrice = () => {
     let total = 0;
     cart.forEach((cartItem, indexProduct) => {
       cartItem.quantities.forEach((qty, sizeIdx) => {
         const priceString = arrCoffee[indexProduct].price[sizeIdx];
+        // "300.000 VND" -> 300000
         const priceNumber = Number(
           priceString.replace(" VND", "").replace(/\./g, "")
         );
@@ -198,13 +184,12 @@ function Home() {
     return total;
   };
 
-  // Hàm tăng/giảm số lượng
+  // Tăng/giảm số lượng
   const handleIncrement = (productIndex, sizeIndex) => {
     const newCart = [...cart];
     newCart[productIndex].quantities[sizeIndex]++;
     setCart(newCart);
   };
-
   const handleDecrement = (productIndex, sizeIndex) => {
     const newCart = [...cart];
     if (newCart[productIndex].quantities[sizeIndex] > 0) {
@@ -213,57 +198,85 @@ function Home() {
     setCart(newCart);
   };
 
-  // Xử lý thay đổi thông tin người nhận
+  // Xử lý thông tin người nhận
   const handleCustomerInfoChange = (e) => {
     const { name, value } = e.target;
     setCustomerInfo((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Khi người dùng bấm "Xác nhận đặt hàng"
+  // Người dùng bấm "Xác nhận đặt hàng"
   const handleConfirmOrder = () => {
-    // Bước 1: validate bằng zod
+    // Validate thông tin người nhận
     const result = orderSchema.safeParse(customerInfo);
-
-    // Bước 2: Kiểm tra người dùng đã chọn ít nhất 1 sản phẩm chưa
     const totalQty = getTotalQuantity();
 
     if (!result.success) {
-      // Có lỗi validate => setFormErrors để hiển thị
       const zodErrors = result.error.errors.map((err) => err.message);
       setFormErrors(zodErrors);
       return;
     } else if (totalQty === 0) {
-      // Không chọn món nào
       setFormErrors(["Bạn chưa chọn sản phẩm nào."]);
       return;
     }
 
-    // Nếu qua được mọi kiểm tra => xoá lỗi cũ, mở modal xác nhận
     setFormErrors([]);
     setIsConfirmModalOpen(true);
   };
 
-  // Người dùng bấm "Đồng ý" trong modal xác nhận
-  const handleFinalConfirm = () => {
-    setIsConfirmModalOpen(false); // đóng modal xác nhận
-    setIsOrderFormOpen(false); // đóng form order
+  // Hàm gọi API Gateway để lưu đơn hàng
+  const submitOrderToAPI = async () => {
+    const orderPayload = {
+      customerInfo,
+      items: cart.map((cartItem, index) => {
+        const coffee = arrCoffee[index];
+        return {
+          nameProduct: coffee.nameProduct,
+          variants: coffee.Size.map((sz, sizeIdx) => ({
+            size: sz,
+            quantity: cartItem.quantities[sizeIdx],
+            price: coffee.price[sizeIdx],
+          })),
+        };
+      }),
+      totalPrice: getTotalPrice(),
+    };
+    try {
+      const response = await fetch(
+        "https://wn7pg9kwgi.execute-api.ap-southeast-1.amazonaws.com/prod/orders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
 
-    // Bật cờ orderSuccess => sẽ trigger hiệu ứng pháo hoa + redirect (trong useEffect)
-    setOrderSuccess(true);
+      const data = await response.json();
 
-    // Reset cart & thông tin
-    setCart(arrCoffee.map(() => ({ quantities: [0, 0] })));
-    setCustomerInfo({ name: "", address: "", phone: "" });
+      // Lưu thành công => hiển thị confetti
+      setOrderSuccess(true);
+
+      setCart(arrCoffee.map(() => ({ quantities: [0, 0] })));
+      setCustomerInfo({ name: "", address: "", phone: "" });
+    } catch (error) {
+      console.error("Error saving order:", error);
+      alert("Có lỗi xảy ra khi gửi đơn hàng. Vui lòng thử lại sau.");
+    }
   };
 
-  // Người dùng bấm "Hủy" trong modal xác nhận
+  const handleFinalConfirm = () => {
+    setIsConfirmModalOpen(false);
+    setIsOrderFormOpen(false);
+    submitOrderToAPI();
+  };
+
   const handleCancelConfirm = () => {
     setIsConfirmModalOpen(false);
   };
 
   return (
     <>
-      {/* Nếu orderSuccess + showConfetti => hiển thị Confetti */}
       {showConfetti && <Confetti />}
 
       {/* Section 1: Navbar */}
@@ -298,27 +311,27 @@ function Home() {
         </div>
       </section>
 
-      {/* Section 4: button for display form order */}
+      {/* Section 4: Order button */}
       <section>
         <div className="Order">
           <button onClick={handleOrderNowClick}>Order Now</button>
         </div>
       </section>
 
-      {/* Hiển thị thông báo đặt hàng thành công (nếu có) */}
+      {/* Thông báo đặt hàng thành công */}
       {orderSuccess && (
         <div className="OrderSuccessModal">
           <p>Đơn hàng của bạn đã được đặt thành công!</p>
         </div>
       )}
 
-      {/* Form đặt hàng (overlay / modal) */}
+      {/* Form đặt hàng */}
       {isOrderFormOpen && (
         <div className="OrderFormOverlay">
           <div className="OrderForm">
             <h2>Đặt hàng</h2>
 
-            {/* Nếu có lỗi validate => hiển thị */}
+            {/* Hiển thị lỗi (nếu có) */}
             {formErrors.length > 0 && (
               <div style={{ color: "red", marginBottom: "10px" }}>
                 {formErrors.map((err, idx) => (
@@ -328,7 +341,7 @@ function Home() {
             )}
 
             <div className="OrderFormContainer">
-              {/* Cột trái: Liệt kê sản phẩm + nút +/- */}
+              {/* Cột trái */}
               <div className="OrderFormLeft">
                 {arrCoffee.map((coffee, productIndex) => (
                   <div key={coffee.nameProduct} className="OrderFormProduct">
@@ -366,7 +379,7 @@ function Home() {
                 ))}
               </div>
 
-              {/* Cột phải: Thông tin tổng hợp + Nhập thông tin người nhận */}
+              {/* Cột phải*/}
               <div className="OrderFormRight">
                 <h3>Tổng quan</h3>
                 <p>
@@ -422,7 +435,7 @@ function Home() {
         </div>
       )}
 
-      {/* Modal xác nhận lần cuối */}
+      {/* Modal xác nhận */}
       {isConfirmModalOpen && (
         <div className="ConfirmModalOverlay">
           <div className="ConfirmModal">
