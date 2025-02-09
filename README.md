@@ -1,78 +1,75 @@
-# Giới thiệu:
+---
 
-Đây là một project cơ bản để bạn có thể bắt đầu tìm hiểu về Serverless.
+# Introduction:
 
-# Công nghệ sử dụng:
+This is a basic project to help you get started with Serverless.
+
+# Technologies Used:
 
 React+Vite, AWS API Gateway, AWS Lambda, AWS DynamoDB.
 
-# Hướng dẫn cài đặt:
+# Installation Guide:
 
 ### DynamoDB:
 
-Tạo mới 1 bảng với primary key "orderID".
+Create a new table with the primary key **"orderID"**.
 
 ### Lambda:
 
-Tạo mới 1 Lambda function, thiết lập các permissions để có thể ghi log và đọc, ghi với DynamoDB (Tuy nhiên trong thực tế, ta sẽ không nên để các permissions là fullaccess mà chỉ chọn lọc những quyền cần dùng ).
+Create a new **Lambda function** and configure the necessary permissions to allow logging and read/write access to **DynamoDB**. 
+
+> ⚠ However, in a real-world scenario, it is recommended to grant only the necessary permissions instead of full access.
 
 <p align="center">
-<image src="./src/assets/permission.png" alt ="Permission" width="60%" />
+  <img src="./src/assets/permission.png" alt="Permission" width="80%" />
 </p>
-Đẩy function.zip (đã để trong source) vào Lambda function, vậy là ta đã có 1 Lambda function.
+
+Upload the **function.zip** file (already included in the source) to the Lambda function. Once uploaded, your Lambda function is ready to use.
 
 ### API Gateway:
 
-Tạo mới 1 API Gateway, tạo 1 resources /orders và tạo POST method.
+Create a new **API Gateway**, add a resource **/orders**, and set up a **POST** method.
 
 <p align="center">
-<image src="./src/assets/API Gateway.png" alt= "Permission" width="60%" />
+  <img src="./src/assets/API Gateway.png" alt="API Gateway" width="80%" />
 </p>
 
-Mở file Home.jsx trong src/Component, sau đó thay thế endpoint (Invoke URL trong mục Stages API Gateway) của bạn vào trong code :
-
-<!-- <p align="center">
-<image src="./src/assets/pic1.jpg
-" alt= "Permission" width="60%" />
-</p> -->
+Open the **Home.jsx** file located in **src/Component**, then replace the endpoint (the **Invoke URL** found in the API Gateway's **Stages** section) with your own:
 
 <p align="center">
-  <img src="./src/assets/InvokeURL.png" alt="Image 2" width="60%" />
+  <img src="./src/assets/InvokeURL.png" alt="Invoke URL" width="80%" />
 </p>
 <p align="center">
-  <img src="./src/assets/pic1.jpg" alt="Image 1" width="60%" />
+  <img src="./src/assets/pic1.jpg" alt="Code Example" width="80%" />
 </p>
 
-### Khởi động dự án web:
+### Start the Web Project:
 
-Di chuyển vào thư mục project, cài đặt các phụ thuộc bằng câu lệnh
+Navigate to the project directory and install dependencies by running:
 
 ```sh
 npm install
 ```
 
+Then, start the development server:
+
 ```sh
 npm run dev
 ```
 
-Trang hiển thị giao diện thành công và bạn có thể bắt đầu sử dụng các chức năng:
+If everything is set up correctly, you should see the web interface, and you can start using its features:
 
 <p align="center">
-  <img src="./src/assets/demo1.png" alt="Image 2" width="60%" />
+  <img src="./src/assets/demo1.png" alt="Demo Screenshot 1" width="80%" />
 </p>
 <p align="center">
-  <img src="./src/assets/demo2.png" alt="Image 1" width="60%" />
+  <img src="./src/assets/demo2.png" alt="Demo Screenshot 2" width="80%" />
 </p>
 
-Sau khi thử nghiệm chức năng, kiểm tra data đã có trong DynamoDB hay chưa :
+After testing the functionality, check whether the data has been successfully stored in **DynamoDB**:
 
 <p align="center">
-  <img src="./src/assets/demo3.png" alt="Image 1" width="60%" />
+  <img src="./src/assets/demo3.png" alt="DynamoDB Screenshot" width="80%" />
 </p>
 
-# Demo:
-
-<p align="center">
-  <img src="path/to/image1.png" alt="Image 1" width="45%" />
-  <img src="path/to/image2.png" alt="Image 2" width="45%" />
-</p>
+---
