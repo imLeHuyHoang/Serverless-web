@@ -21,25 +21,52 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@3.0.177.219 << 'EOF'
-            # Cài đặt Docker và Docker Compose (nếu cần)
-            # sudo apt-get update
-            # sudo apt-get install -y docker.io
-            # sudo systemctl start docker
-            # sudo systemctl enable docker
-            # 
-            # sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" \
-            #   -o /usr/local/bin/docker-compose
-            # sudo chmod +x /usr/local/bin/docker-compose
 
-            # Kiểm tra
-            docker --version
-            docker-compose --version
+            # 1. Kiểm tra Docker. Nếu chưa cài, cài đặt Docker.
+            if ! command -v docker &> /dev/null
+            then
+              echo "Docker not found. Installing..."
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+            else
+              echo "Docker is already installed:"
+              docker --version
+            fi
 
-            # Clone lại code nếu cần
-            rm -rf Serverless-web
-            git clone https://github.com/imLeHuyHoang/Serverless-web.git
-            cd Serverless-web
+            # 2. Kiểm tra Docker Compose. Nếu chưa cài, cài đặt Docker Compose.
+            if ! command -v docker-compose &> /dev/null
+            then
+              echo "Docker Compose not found. Installing..."
+              sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-\$(uname -s)-\$(uname -m)" \
+                -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            else
+              echo "Docker Compose is already installed:"
+              docker-compose --version
+            fi
 
-            # Build & Run container
+            # 3. Nếu thư mục dự án chưa tồn tại, clone mới. Nếu tồn tại rồi, chỉ cần pull.
+            cd ~
+            if [ ! -d "Serverless-web" ]; then
+              echo "Cloning repository..."
+              git clone https://github.com/imLeHuyHoang/Serverless-web.git
+              cd Serverless-web
+            else
+              echo "Repository already exists. Pulling latest..."
+              cd Serverless-web
+              git pull origin main
+            fi
+
+            # 4. Dừng và xóa container cũ trước khi chạy container mới (tránh xung đột).
+            #    Lệnh 'down' sẽ dừng container + mạng + volume (nếu cần).
+            echo "Stopping old containers..."
+            sudo docker-compose down --volumes --remove-orphans
+
+            # 5. Build và chạy container mới.
+            echo "Building and starting new container..."
             sudo docker-compose up -d --build
+
+            echo "Done!"
           EOF
