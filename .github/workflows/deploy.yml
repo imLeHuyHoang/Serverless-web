@@ -3,16 +3,17 @@ name: CI/CD Pipeline for React App
 on:
   push:
     branches:
-      - main  # Branch để trigger CI/CD
+      - main  # Trigger CI/CD pipeline khi có push vào nhánh main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up SSH key
+    - name: Set up SSH for EC2 deployment
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
@@ -23,18 +24,23 @@ jobs:
       run: |
         scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r . ec2-user@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}
 
-    - name: Set up Docker on EC2
-      run: |
-        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST_DNS }} << 'EOF'
-          # Cài đặt Docker và Docker Compose
+    - name: Set up Docker on EC2 and deploy with Docker Compose
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST_DNS }}
+        username: ec2-user  # Sử dụng username là ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # Cài đặt Docker và Docker Compose trên EC2
           sudo yum update -y
           sudo yum install -y docker
           sudo systemctl start docker
           sudo systemctl enable docker
+
           # Cài đặt Docker Compose (nếu chưa có)
           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
+
           # Build và chạy ứng dụng bằng Docker Compose
           cd ${{ secrets.TARGET_DIR }}
           sudo docker-compose up -d --build
-        EOF
