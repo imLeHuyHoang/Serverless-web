@@ -1,0 +1,40 @@
+name: CI/CD Pipeline for React App
+
+on:
+  push:
+    branches:
+      - main  # Branch để trigger CI/CD
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up SSH for EC2 deployment
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+    - name: Copy code to EC2
+      run: |
+        scp -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no -r . ec2-user@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}
+
+    - name: Set up Docker on EC2
+      run: |
+        ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST_DNS }} << 'EOF'
+          # Cài đặt Docker và Docker Compose
+          sudo yum update -y
+          sudo yum install -y docker
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
+          # Cài đặt Docker Compose (nếu chưa có)
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+          # Build và chạy ứng dụng bằng Docker Compose
+          cd ${{ secrets.TARGET_DIR }}
+          sudo docker-compose up -d --build
+        EOF
