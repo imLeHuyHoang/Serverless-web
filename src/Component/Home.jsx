@@ -112,6 +112,7 @@ const arrAdvertising = [
   "Shop now before it's too late :)",
   "Free shipping on orders above 500.000 VND",
   "New collection coming soon!",
+  "Get a free coffee on your birthday!",
 ];
 
 // Card hiển thị từng sản phẩm
