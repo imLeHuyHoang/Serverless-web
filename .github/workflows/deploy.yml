@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@your-ec2-public-ip << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@3.0.177.219 << 'EOF'
             docker --version
             docker-compose --version
           EOF
