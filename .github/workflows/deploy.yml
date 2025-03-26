@@ -15,20 +15,28 @@ jobs:
 
     - name: Set up SSH for EC2 deployment
       run: |
+        # Tạo thư mục .ssh nếu chưa có
         mkdir -p ~/.ssh
+
+        # Lưu khóa SSH vào id_rsa
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        
+        # Đảm bảo khóa có quyền truy cập đúng
         chmod 600 ~/.ssh/id_rsa
+
+        # Thêm máy chủ EC2 vào danh sách known hosts
         ssh-keyscan -H ${{ secrets.HOST_DNS }} >> ~/.ssh/known_hosts
 
     - name: Copy code to EC2
       run: |
+        # Sử dụng scp để sao chép mã nguồn lên EC2
         scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r . ec2-user@${{ secrets.HOST_DNS }}:/home/ec2-user/${{ secrets.TARGET_DIR }}
 
     - name: Set up Docker on EC2 and deploy with Docker Compose
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.HOST_DNS }}
-        username: ec2-user  # Sử dụng username là ec2-user
+        username: ec2-user
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Cài đặt Docker và Docker Compose trên EC2
