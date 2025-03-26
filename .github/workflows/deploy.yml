@@ -2,31 +2,25 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main  # Khi có thay đổi trên nhánh main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Deploy to EC2
-      env:
-        PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-        HOST: ${{ secrets.EC2_HOST }}
-        USER: ${{ secrets.EC2_USER }}
-      run: |
-        echo "$PRIVATE_KEY" > github-ec2.pem && chmod 600 github-ec2.pem
-        ssh -o StrictHostKeyChecking=no -i github-ec2.pem ${USER}@${HOST} "
-        echo 'Current directory: $(pwd)'
-        echo 'Listing home directory:'
-        ls -la ~
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-        echo 'Installing Node.js...'
-        if ! command -v nvm &> /dev/null; then
-          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-          export NVM_DIR=\"$HOME/.nvm\"
-          [ -s \"$NVM_DIR/nvm.sh\" ] && \. \"$NVM_DIR/nvm.sh\"  # This loads nvm
-        fi
-        nvm install node
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@your-ec2-public-ip << 'EOF'
+            docker --version
+            docker-compose --version
+          EOF
