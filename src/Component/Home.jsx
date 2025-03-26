@@ -15,7 +15,7 @@ const orderSchema = z.object({
   phone: z
     .string()
     .min(1, "Vui lòng nhập số điện thoại.")
-    .regex(/^[0-9]+$/, "Số điện thoại không hợp lệ (chỉ chứa chữ số)."),
+    .regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ."),
 });
 
 const arrAdvertising = [
@@ -54,6 +54,29 @@ const arrCoffee = [
     Note: "Bright notes of peach, honey, with a juicy acidity.",
   },
 ];
+export const getTotalPrice = () => {
+  let total = 0;
+  cart.forEach((cartItem, indexProduct) => {
+    cartItem.quantities.forEach((qty, sizeIdx) => {
+      const priceString = arrCoffee[indexProduct].price[sizeIdx];
+      // "300.000 VND" -> 300000
+      const priceNumber = Number(
+        priceString.replace(" VND", "").replace(/\./g, "")
+      );
+      total += priceNumber * qty;
+    });
+  });
+  return total;
+};
+export const getTotalQuantity = () => {
+  let totalQty = 0;
+  cart.forEach((cartItem) => {
+    cartItem.quantities.forEach((qty) => {
+      totalQty += qty;
+    });
+  });
+  return totalQty;
+};
 
 function ProductCard({ coffee }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -93,19 +116,13 @@ function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const productListRef = useRef(null);
 
-  // State mở Form đặt hàng
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
 
-  // State mở/đóng modal xác nhận
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-  // State hiển thị đặt hàng thành công
   const [orderSuccess, setOrderSuccess] = useState(false);
-
-  // Bật/tắt Confetti
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Tạo giỏ hàng (cart): cho mỗi sp (arrCoffee) => { quantities: [0,0] }
   const [cart, setCart] = useState(
     arrCoffee.map(() => ({ quantities: [0, 0] }))
   );
@@ -117,7 +134,6 @@ function Home() {
     phone: "",
   });
 
-  // Lỗi validate
   const [formErrors, setFormErrors] = useState([]);
 
   const navigate = useNavigate();
@@ -160,31 +176,13 @@ function Home() {
     setOrderSuccess(false);
   };
 
-  // Tính tổng số lượng
-  const getTotalQuantity = () => {
-    return cart.reduce(
-      (acc, item) => acc + item.quantities.reduce((a, b) => a + b, 0),
-      0
-    );
-  };
+  // const getTotalQuantity = () => {
+  //   return cart.reduce(
+  //     (acc, item) => acc + item.quantities.reduce((a, b) => a + b, 0),
+  //     0
+  //   );
+  // };
 
-  // Tính tổng tiền
-  const getTotalPrice = () => {
-    let total = 0;
-    cart.forEach((cartItem, indexProduct) => {
-      cartItem.quantities.forEach((qty, sizeIdx) => {
-        const priceString = arrCoffee[indexProduct].price[sizeIdx];
-        // "300.000 VND" -> 300000
-        const priceNumber = Number(
-          priceString.replace(" VND", "").replace(/\./g, "")
-        );
-        total += priceNumber * qty;
-      });
-    });
-    return total;
-  };
-
-  // Tăng/giảm số lượng
   const handleIncrement = (productIndex, sizeIndex) => {
     const newCart = [...cart];
     newCart[productIndex].quantities[sizeIndex]++;
@@ -198,13 +196,11 @@ function Home() {
     setCart(newCart);
   };
 
-  // Xử lý thông tin người nhận
   const handleCustomerInfoChange = (e) => {
     const { name, value } = e.target;
     setCustomerInfo((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Người dùng bấm "Xác nhận đặt hàng"
   const handleConfirmOrder = () => {
     // Validate thông tin người nhận
     const result = orderSchema.safeParse(customerInfo);
