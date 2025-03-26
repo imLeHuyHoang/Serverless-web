@@ -111,6 +111,7 @@ const orderSchema = z.object({
 const arrAdvertising = [
   "Shop now before it's too late :)",
   "Free shipping on orders above 500.000 VND",
+  "New collection coming soon!",
 ];
 
 // Card hiển thị từng sản phẩm
