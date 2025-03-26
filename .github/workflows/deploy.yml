@@ -22,7 +22,7 @@ jobs:
 
     - name: Copy code to EC2
       run: |
-        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r . ec2-user@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}
+        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r . ec2-user@${{ secrets.HOST_DNS }}:/home/ec2-user/${{ secrets.TARGET_DIR }}
 
     - name: Set up Docker on EC2 and deploy with Docker Compose
       uses: appleboy/ssh-action@master
@@ -42,5 +42,5 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
           # Build và chạy ứng dụng bằng Docker Compose
-          cd ${{ secrets.TARGET_DIR }}
+          cd /home/ec2-user/${{ secrets.TARGET_DIR }}
           sudo docker-compose up -d --build
