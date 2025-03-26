@@ -70,9 +70,8 @@ describe("getTotalPrice function", () => {
     ];
 
     global.arrCoffee = [
-      {
-        price: ["300.000 VND", "450.000 VND"],
-      },
+      { price: ["300.000 VND", "450.000 VND"] }, // arrCoffee[0]
+      { price: ["300.000 VND", "450.000 VND"] }, // arrCoffee[1]
     ];
 
     const totalPrice = getTotalPrice();
@@ -95,9 +94,9 @@ describe("getTotalPrice function", () => {
     ];
 
     global.arrCoffee = [
-      {
-        price: ["300.000 VND", "450.000 VND"],
-      },
+      { price: ["300.000 VND", "450.000 VND"] },
+      { price: ["300.000 VND", "450.000 VND"] },
+      { price: ["300.000 VND", "450.000 VND"] },
     ];
 
     const totalPrice = getTotalPrice();

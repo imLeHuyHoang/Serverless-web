@@ -1,14 +1,104 @@
+// src/Component/Home.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import Confetti from "react-confetti";
+import { z } from "zod";
 
 import anh1 from "../assets/anh1.webp";
 import anh2 from "../assets/anh2.webp";
 import anh3 from "../assets/anh3.webp";
 import anh4 from "../assets/anh4.webp";
-import "./Home.css";
-import { z } from "zod";
-import Confetti from "react-confetti";
 
+import "./Home.css";
+
+// ======================
+// Mảng coffee để app sử dụng
+// ======================
+export const arrCoffee = [
+  {
+    nameProduct: "Default Route",
+    price: ["300.000 VND", "450.000 VND"],
+    Image: anh1,
+    Size: ["8OZ", "12OZ"],
+    Note: "100% Natural notes of Berries, Chocolate, & Caramel! Scoring 85+.",
+  },
+  {
+    nameProduct: "On-call",
+    price: ["300.000 VND", "450.000 VND"],
+    Image: anh2,
+    Size: ["8OZ", "12OZ"],
+    Note: "100% Natural notes Cocoa, Cherry, and Maple Syrup! Scoring 85+.",
+  },
+  {
+    nameProduct: "200 OK",
+    price: ["300.000 VND", "450.000 VND"],
+    Image: anh3,
+    Size: ["8OZ", "12OZ"],
+    Note: "Caramlized Honey, Chocolate, brown sugar - an excellent morning cup.",
+  },
+  {
+    nameProduct: "Sudo",
+    price: ["300.000 VND", "450.000 VND"],
+    Image: anh4,
+    Size: ["8OZ", "12OZ"],
+    Note: "Bright notes of peach, honey, with a juicy acidity.",
+  },
+];
+
+/**
+ * Hàm tính tổng tiền.
+ * - Nếu được gọi bên trong app: ta truyền (cart, arrCoffee).
+ * - Nếu được test cũ gọi mà KHÔNG truyền gì => fallback sang global.cart, global.arrCoffee.
+ */
+export function getTotalPrice(cart, coffeeList) {
+  // Fallback cho TEST cũ
+  const localCart = cart || global.cart;
+  const localCoffeeList = coffeeList || global.arrCoffee;
+
+  if (!Array.isArray(localCart) || !Array.isArray(localCoffeeList)) {
+    return 0;
+  }
+
+  let total = 0;
+  localCart.forEach((cartItem, indexProduct) => {
+    if (!localCoffeeList[indexProduct]) return;
+    cartItem.quantities.forEach((qty, sizeIdx) => {
+      const priceString = localCoffeeList[indexProduct].price[sizeIdx];
+      // "300.000 VND" => "300000"
+      const priceNumber = Number(
+        priceString.replace(" VND", "").replace(/\./g, "")
+      );
+      total += priceNumber * qty;
+    });
+  });
+  return total;
+}
+
+/**
+ * Hàm tính tổng số lượng.
+ * - Nếu được gọi bên trong app: ta truyền (cart).
+ * - Nếu được test cũ gọi không truyền => fallback sang global.cart.
+ */
+export function getTotalQuantity(cart) {
+  // Fallback cho TEST cũ
+  const localCart = cart || global.cart;
+
+  if (!Array.isArray(localCart)) {
+    return 0;
+  }
+
+  let totalQty = 0;
+  localCart.forEach((cartItem) => {
+    if (cartItem.quantities && Array.isArray(cartItem.quantities)) {
+      cartItem.quantities.forEach((qty) => {
+        totalQty += qty;
+      });
+    }
+  });
+  return totalQty;
+}
+
+// Schema dùng Zod để validate form
 const orderSchema = z.object({
   name: z.string().min(1, "Vui lòng nhập tên người nhận."),
   address: z.string().min(1, "Vui lòng nhập địa chỉ."),
@@ -23,66 +113,10 @@ const arrAdvertising = [
   "Free shipping on orders above 500.000 VND",
 ];
 
-// Danh sách coffee
-const arrCoffee = [
-  {
-    nameProduct: "Default Route",
-    price: ["300.000 VND", "450.000 VND"],
-    Image: anh1,
-    Size: ["8OZ", "12OZ"],
-    Note: "100% Natural notes of Berries, Chocolate, & Caramel! This coffee has strong berry notes with a sweet caramel finish. Scoring 85+.",
-  },
-  {
-    nameProduct: "On-call",
-    price: ["300.000 VND", "450.000 VND"],
-    Image: anh2,
-    Size: ["8OZ", "12OZ"],
-    Note: "100% Natural notes Cocoa, Cherry, and Maple Syrup! High quality single origin scoring 85+.",
-  },
-  {
-    nameProduct: "200 OK",
-    price: ["300.000 VND", "450.000 VND"],
-    Image: anh3,
-    Size: ["8OZ", "12OZ"],
-    Note: "Caramlized Honey, Chocolate, brown sugar - an excellent morning cup of coffee.",
-  },
-  {
-    nameProduct: "Sudo",
-    price: ["300.000 VND", "450.000 VND"],
-    Image: anh4,
-    Size: ["8OZ", "12OZ"],
-    Note: "Bright notes of peach, honey, with a juicy acidity.",
-  },
-];
-export const getTotalPrice = () => {
-  let total = 0;
-  cart.forEach((cartItem, indexProduct) => {
-    cartItem.quantities.forEach((qty, sizeIdx) => {
-      const priceString = arrCoffee[indexProduct].price[sizeIdx];
-      // "300.000 VND" -> 300000
-      const priceNumber = Number(
-        priceString.replace(" VND", "").replace(/\./g, "")
-      );
-      total += priceNumber * qty;
-    });
-  });
-  return total;
-};
-export const getTotalQuantity = () => {
-  let totalQty = 0;
-  cart.forEach((cartItem) => {
-    cartItem.quantities.forEach((qty) => {
-      totalQty += qty;
-    });
-  });
-  return totalQty;
-};
-
+// Card hiển thị từng sản phẩm
 function ProductCard({ coffee }) {
   const [isOpen, setIsOpen] = useState(false);
-  const toggleDetails = () => {
-    setIsOpen(!isOpen);
-  };
+  const toggleDetails = () => setIsOpen(!isOpen);
 
   return (
     <div className="ProductList_card" onClick={toggleDetails}>
@@ -97,32 +131,37 @@ function ProductCard({ coffee }) {
           {coffee.price[0]} / {coffee.price[1]}
         </p>
       </div>
-      <div
-        className={`ProductDetails ${isOpen ? "open" : ""}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <p>
-          <strong>Size:</strong> {coffee.Size.join(" / ")}
-        </p>
-        <p>
-          <strong>Note:</strong> {coffee.Note}
-        </p>
-      </div>
+      {isOpen && (
+        <div
+          className="ProductDetails open"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p>
+            <strong>Size:</strong> {coffee.Size.join(" / ")}
+          </p>
+          <p>
+            <strong>Note:</strong> {coffee.Note}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
+// Component chính Home
 function Home() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const navigate = useNavigate();
   const productListRef = useRef(null);
 
+  // State
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
-
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Giỏ hàng: mỗi sản phẩm có mảng quantities cho từng size
   const [cart, setCart] = useState(
     arrCoffee.map(() => ({ quantities: [0, 0] }))
   );
@@ -136,8 +175,7 @@ function Home() {
 
   const [formErrors, setFormErrors] = useState([]);
 
-  const navigate = useNavigate();
-
+  // Hiệu ứng carousel quảng cáo
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % arrAdvertising.length);
@@ -145,6 +183,7 @@ function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Hiệu ứng Confetti khi orderSuccess
   useEffect(() => {
     if (orderSuccess) {
       setShowConfetti(true);
@@ -156,6 +195,12 @@ function Home() {
     }
   }, [orderSuccess, navigate]);
 
+  // Tính tổng tiền & số lượng
+  // (gọi hàm, nhưng LẦN NÀY ta truyền cart và arrCoffee để chạy bình thường)
+  const totalPrice = getTotalPrice(cart, arrCoffee);
+  const totalQty = getTotalQuantity(cart);
+
+  // Xử lý nút prev/next
   const handlePrevClick = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? arrAdvertising.length - 1 : prevIndex - 1
@@ -167,7 +212,9 @@ function Home() {
 
   // Scroll tới danh sách sp
   const handleShopCoffeeClick = () => {
-    productListRef.current.scrollIntoView({ behavior: "smooth" });
+    if (productListRef.current) {
+      productListRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   // Mở form đặt hàng
@@ -176,13 +223,7 @@ function Home() {
     setOrderSuccess(false);
   };
 
-  // const getTotalQuantity = () => {
-  //   return cart.reduce(
-  //     (acc, item) => acc + item.quantities.reduce((a, b) => a + b, 0),
-  //     0
-  //   );
-  // };
-
+  // Tăng/giảm số lượng
   const handleIncrement = (productIndex, sizeIndex) => {
     const newCart = [...cart];
     newCart[productIndex].quantities[sizeIndex]++;
@@ -196,15 +237,15 @@ function Home() {
     setCart(newCart);
   };
 
+  // Thay đổi thông tin khách hàng
   const handleCustomerInfoChange = (e) => {
     const { name, value } = e.target;
     setCustomerInfo((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Trước khi gọi API => kiểm tra form + số lượng
   const handleConfirmOrder = () => {
-    // Validate thông tin người nhận
     const result = orderSchema.safeParse(customerInfo);
-    const totalQty = getTotalQuantity();
 
     if (!result.success) {
       const zodErrors = result.error.errors.map((err) => err.message);
@@ -219,7 +260,7 @@ function Home() {
     setIsConfirmModalOpen(true);
   };
 
-  // Hàm gọi API Gateway để lưu đơn hàng
+  // Gửi đơn hàng tới API Gateway
   const submitOrderToAPI = async () => {
     const orderPayload = {
       customerInfo,
@@ -234,8 +275,9 @@ function Home() {
           })),
         };
       }),
-      totalPrice: getTotalPrice(),
+      totalPrice,
     };
+
     try {
       const response = await fetch(
         "https://wn7pg9kwgi.execute-api.ap-southeast-1.amazonaws.com/prod/orders",
@@ -249,10 +291,12 @@ function Home() {
       );
 
       const data = await response.json();
+      console.log("Response from API: ", data);
 
       // Lưu thành công => hiển thị confetti
       setOrderSuccess(true);
 
+      // Reset cart & form
       setCart(arrCoffee.map(() => ({ quantities: [0, 0] })));
       setCustomerInfo({ name: "", address: "", phone: "" });
     } catch (error) {
@@ -261,12 +305,14 @@ function Home() {
     }
   };
 
+  // Người dùng đồng ý => gửi API
   const handleFinalConfirm = () => {
     setIsConfirmModalOpen(false);
     setIsOrderFormOpen(false);
     submitOrderToAPI();
   };
 
+  // Người dùng huỷ => đóng modal
   const handleCancelConfirm = () => {
     setIsConfirmModalOpen(false);
   };
@@ -275,7 +321,7 @@ function Home() {
     <>
       {showConfetti && <Confetti />}
 
-      {/* Section 1: Navbar */}
+      {/* Section 1: Navbar quảng cáo */}
       <section>
         <div className="Navbar">
           <button className="Navbar_button" onClick={handlePrevClick}>
@@ -298,7 +344,7 @@ function Home() {
         </div>
       </section>
 
-      {/* Section 3: Product List */}
+      {/* Section 3: Danh sách sp */}
       <section ref={productListRef}>
         <div className="ProductList">
           {arrCoffee.map((coffee) => (
@@ -307,7 +353,7 @@ function Home() {
         </div>
       </section>
 
-      {/* Section 4: Order button */}
+      {/* Section 4: Nút Order */}
       <section>
         <div className="Order">
           <button onClick={handleOrderNowClick}>Order Now</button>
@@ -375,15 +421,14 @@ function Home() {
                 ))}
               </div>
 
-              {/* Cột phải*/}
+              {/* Cột phải */}
               <div className="OrderFormRight">
                 <h3>Tổng quan</h3>
                 <p>
-                  Tổng số lượng: <strong>{getTotalQuantity()}</strong>
+                  Tổng số lượng: <strong>{totalQty}</strong>
                 </p>
                 <p>
-                  Tổng tiền:{" "}
-                  <strong>{getTotalPrice().toLocaleString()} VND</strong>
+                  Tổng tiền: <strong>{totalPrice.toLocaleString()} VND</strong>
                 </p>
 
                 <h3>Thông tin người nhận</h3>
@@ -431,7 +476,7 @@ function Home() {
         </div>
       )}
 
-      {/* Modal xác nhận */}
+      {/* Modal confirm */}
       {isConfirmModalOpen && (
         <div className="ConfirmModalOverlay">
           <div className="ConfirmModal">
