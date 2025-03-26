@@ -12,28 +12,28 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up SSH for EC2 deployment
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.HOST_DNS }} >> ~/.ssh/known_hosts
 
     - name: Copy code to EC2
       run: |
-        scp -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no -r . ec2-user@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}
+        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r . ec2-user@${{ secrets.HOST_DNS }}:${{ secrets.TARGET_DIR }}
 
     - name: Set up Docker on EC2
       run: |
-        ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST_DNS }} << 'EOF'
+        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.HOST_DNS }} << 'EOF'
           # Cài đặt Docker và Docker Compose
           sudo yum update -y
           sudo yum install -y docker
           sudo systemctl start docker
           sudo systemctl enable docker
-
           # Cài đặt Docker Compose (nếu chưa có)
           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
-
           # Build và chạy ứng dụng bằng Docker Compose
           cd ${{ secrets.TARGET_DIR }}
           sudo docker-compose up -d --build
