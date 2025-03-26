@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # Khi có thay đổi trên nhánh main
+      - main
 
 jobs:
   deploy:
@@ -16,35 +16,30 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          # Đây là private key cho EC2, bạn cần thêm vào GitHub Secrets
           ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@3.0.177.219 << 'EOF'
-            # Cài đặt sẵn Docker và Docker Compose nếu bạn chưa cài đặt
-            # (bỏ qua nếu trên EC2 đã cài đặt sẵn)
-            # -------------------------------------------------------------
+            # Cài đặt Docker và Docker Compose (nếu cần)
             # sudo apt-get update
             # sudo apt-get install -y docker.io
             # sudo systemctl start docker
             # sudo systemctl enable docker
-            #
-            # sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
+            # 
+            # sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" \
+            #   -o /usr/local/bin/docker-compose
             # sudo chmod +x /usr/local/bin/docker-compose
 
-            # Kiểm tra Docker và Docker Compose
+            # Kiểm tra
             docker --version
             docker-compose --version
 
-            # Nếu muốn pull code mới nhất về mỗi lần deploy,
-            # ta có thể xóa folder cũ và clone lại:
+            # Clone lại code nếu cần
             rm -rf Serverless-web
-
-            # Clone code
             git clone https://github.com/imLeHuyHoang/Serverless-web.git
             cd Serverless-web
 
-            # Build và chạy container
-            docker-compose up -d --build
+            # Build & Run container
+            sudo docker-compose up -d --build
           EOF
