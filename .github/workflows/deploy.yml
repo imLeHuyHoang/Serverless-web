@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@3.0.177.219 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << 'EOF'
             # Cài đặt Docker và Docker Compose (nếu cần)
             # sudo apt-get update
             # sudo apt-get install -y docker.io
