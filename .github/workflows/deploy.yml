@@ -20,36 +20,20 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@3.0.177.219 << 'EOF'
+            # Cài đặt Docker và Docker Compose (nếu cần)
+            # sudo apt-get update
+            # sudo apt-get install -y docker.io
+            # sudo systemctl start docker
+            # sudo systemctl enable docker
+            # 
+            # sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" \
+            #   -o /usr/local/bin/docker-compose
+            # sudo chmod +x /usr/local/bin/docker-compose
 
-            # 1. Kiểm tra Docker. Nếu chưa cài, cài đặt Docker.
-            if ! command -v docker &> /dev/null
-            then
-              echo "Docker not found. Installing..."
-              sudo apt-get update
-              sudo apt-get install -y docker.io
-              sudo systemctl start docker
-              sudo systemctl enable docker
-            else
-              echo "Docker is already installed:"
-              docker --version
-            fi
-
-            # 2. Kiểm tra Docker Compose. Nếu chưa cài, cài đặt Docker Compose.
-            if ! command -v docker-compose &> /dev/null
-            then
-              echo "Docker Compose not found. Installing..."
-              # Using apt to install Docker Compose instead of curl
-              sudo apt-get update
-              sudo apt-get install -y docker-compose-plugin
-              # Create a symbolic link for backward compatibility
-              sudo ln -sf /usr/libexec/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
-              # Make sure it's executable
-              sudo chmod +x /usr/local/bin/docker-compose
-            else
-              echo "Docker Compose is already installed:"
-              docker-compose --version
-            fi
+            # Kiểm tra
+            docker --version
+            docker-compose --version
 
             # 3. Install Node.js if not present
             if ! command -v node &> /dev/null
@@ -106,4 +90,11 @@ jobs:
             fi
 
             echo "Done!"
+            # Clone lại code nếu cần
+            rm -rf Serverless-web
+            git clone https://github.com/imLeHuyHoang/Serverless-web.git
+            cd Serverless-web
+
+            # Build & Run container
+            sudo docker-compose up -d --build
           EOF
