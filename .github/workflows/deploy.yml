@@ -57,14 +57,13 @@ jobs:
             # 5) Chạy npm run test 
             CI=true npm run test
 
-            # 6) Kiểm tra xem docker hiện tại có đang chạy không, nếu có thì dừng lại
-            if [ "$(docker ps -q)" ]; then
-              echo "Stopping running Docker containers..."
-              sudo docker stop $(docker ps -q)
-            fi
+            # 6) Dừng & xoá container cũ (nếu có)
+            sudo docker-compose down --rmi all --volumes --remove-orphans || true
 
-            # 7) Chạy docker-compose up -d để khởi động lại ứng dụng
+            # 7) Build & chạy lại container
             echo "Starting Docker containers..."
             sudo docker-compose up -d --build
+
+
 
           EOF
