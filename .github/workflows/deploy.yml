@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << EOF
             set -e
             
             echo "=== 1. Gỡ các gói Docker cũ (nếu có) ==="
