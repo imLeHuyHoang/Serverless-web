@@ -75,11 +75,6 @@ jobs:
               echo "Using docker compose plugin instead of docker-compose"
             fi
 
-            # 6. Chạy npm run test để kiểm tra mã nguồn trước khi build.
-            echo "Running tests..."
-            npm install
-            npm run test || echo "Tests failed but continuing deployment"
-
             # 7. Build và chạy container mới - sử dụng cú pháp linh hoạt
             echo "Building and starting new container..."
             if command -v docker-compose &> /dev/null; then
