@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@3.0.177.219 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << 'EOF'
 
             # 1. Kiểm tra Docker. Nếu chưa cài, cài đặt Docker.
             if ! command -v docker &> /dev/null
@@ -60,11 +60,15 @@ jobs:
             fi
 
             # 4. Dừng và xóa container cũ trước khi chạy container mới (tránh xung đột).
-            #    Lệnh 'down' sẽ dừng container + mạng + volume (nếu cần).
             echo "Stopping old containers..."
             sudo docker-compose down --volumes --remove-orphans
 
-            # 5. Build và chạy container mới.
+            # 5. Chạy npm run test để kiểm tra mã nguồn trước khi build.
+            echo "Running tests..."
+            npm install
+            npm run test
+
+            # 6. Build và chạy container mới.
             echo "Building and starting new container..."
             sudo docker-compose up -d --build
 
