@@ -21,21 +21,37 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << 'EOF'
-            # 1. Cài đặt Docker Compose Plugin
-            if ! command -v docker-compose &> /dev/null; then
-              echo "Installing Docker Compose Plugin..."
-              sudo apt-get update
-              sudo apt-get install -y docker-compose-plugin
-            fi
+            set -e
+            
+            echo "=== 1. Gỡ các gói Docker cũ (nếu có) ==="
+            sudo apt-get remove -y docker docker.io containerd runc docker-compose || true
+            sudo apt-get update
 
-            # 2. Install Node.js if not present
+            echo "=== 2. Cài đặt Docker CE và Docker Compose Plugin ==="
+            sudo apt-get install -y ca-certificates curl gnupg
+
+            # Thêm GPG key cho Docker
+            sudo install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+            # Thêm Docker repository
+            # Lưu ý: Nếu $(lsb_release -cs) bị sai, có thể thay bằng "jammy" (Ubuntu 22.04) hoặc phù hợp
+            echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+              https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" \
+              | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+            sudo apt-get update
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+            echo "=== 3. Cài đặt Node.js (nếu chưa có) ==="
             if ! command -v node &> /dev/null; then
               echo "Installing Node.js..."
               curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
               sudo apt-get install -y nodejs
             fi
 
-            # 3. Clone or update repository
+            echo "=== 4. Clone hoặc pull code từ repo ==="
             cd ~
             if [ ! -d "Serverless-web" ]; then
               git clone https://github.com/imLeHuyHoang/Serverless-web.git
@@ -45,12 +61,10 @@ jobs:
               git pull origin main
             fi
 
-            # 4. Stop any running containers
-            echo "Stopping existing containers..."
+            echo "=== 5. Dừng và xóa container cũ (nếu có) ==="
             sudo docker compose down --volumes --remove-orphans || true
 
-            # 5. Build and start new containers
-            echo "Building and starting containers..."
+            echo "=== 6. Build và chạy container mới ==="
             sudo docker compose up --build -d
 
             echo "Deployment completed!"
