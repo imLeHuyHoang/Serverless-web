@@ -60,11 +60,11 @@ jobs:
             # 6) Kiểm tra xem docker hiện tại có đang chạy không, nếu có thì dừng lại
             if [ "$(docker ps -q)" ]; then
               echo "Stopping running Docker containers..."
-              docker stop $(docker ps -q)
+              sudo docker stop $(docker ps -q)
             fi
 
             # 7) Chạy docker-compose up -d để khởi động lại ứng dụng
             echo "Starting Docker containers..."
-            docker-compose up -d --build
+            sudo docker-compose up -d --build
 
           EOF
