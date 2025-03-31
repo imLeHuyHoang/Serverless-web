@@ -21,75 +21,37 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << 'EOF'
-            # Cài đặt Docker và Docker Compose (nếu cần)
-            # sudo apt-get update
-            # sudo apt-get install -y docker.io
-            # sudo systemctl start docker
-            # sudo systemctl enable docker
-            # 
-            # sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" \
-            #   -o /usr/local/bin/docker-compose
-            # sudo chmod +x /usr/local/bin/docker-compose
-
-            # Kiểm tra
-            docker --version
-            docker-compose --version
-
-            # 3. Install Node.js if not present
-            if ! command -v node &> /dev/null
-            then
-              echo "Node.js not found. Installing..."
+            # 1. Cài đặt Docker Compose Plugin
+            if ! command -v docker-compose &> /dev/null; then
+              echo "Installing Docker Compose Plugin..."
               sudo apt-get update
-              sudo apt-get install -y ca-certificates curl gnupg
-              sudo mkdir -p /etc/apt/keyrings
-              curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-              echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-              sudo apt-get update
-              sudo apt-get install -y nodejs
-              echo "Node.js installed:"
-              node --version
-              npm --version
-            else
-              echo "Node.js is already installed:"
-              node --version
+              sudo apt-get install -y docker-compose-plugin
             fi
 
-            # 4. Nếu thư mục dự án chưa tồn tại, clone mới. Nếu tồn tại rồi, chỉ cần pull.
+            # 2. Install Node.js if not present
+            if ! command -v node &> /dev/null; then
+              echo "Installing Node.js..."
+              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+
+            # 3. Clone or update repository
             cd ~
             if [ ! -d "Serverless-web" ]; then
-              echo "Cloning repository..."
               git clone https://github.com/imLeHuyHoang/Serverless-web.git
               cd Serverless-web
             else
-              echo "Repository already exists. Pulling latest..."
               cd Serverless-web
               git pull origin main
             fi
 
-            # 5. Kiểm tra xem docker-compose tồn tại không trước khi sử dụng
-            if command -v docker-compose &> /dev/null; then
-              # Dừng và xóa container cũ trước khi chạy container mới
-              echo "Stopping old containers..."
-              sudo docker-compose down --volumes --remove-orphans || true
-            else
-              echo "Using docker compose plugin instead of docker-compose"
-            fi
+            # 4. Stop any running containers
+            echo "Stopping existing containers..."
+            sudo docker compose down --volumes --remove-orphans || true
 
-            # 7. Build và chạy container mới - sử dụng cú pháp linh hoạt
-            echo "Building and starting new container..."
-            if command -v docker-compose &> /dev/null; then
-              sudo docker-compose up -d --build
-            else
-              # Sử dụng docker compose plugin nếu docker-compose không tồn tại
-              sudo docker compose up -d --build
-            fi
+            # 5. Build and start new containers
+            echo "Building and starting containers..."
+            sudo docker compose up --build -d
 
-            echo "Done!"
-            # Clone lại code nếu cần
-            rm -rf Serverless-web
-            git clone https://github.com/imLeHuyHoang/Serverless-web.git
-            cd Serverless-web
-
-            # Build & Run container
-            sudo docker-compose up -d --build
+            echo "Deployment completed!"
           EOF
