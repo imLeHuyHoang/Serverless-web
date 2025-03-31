@@ -20,38 +20,31 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@18.141.57.31 << EOF
+          ssh -o StrictHostKeyChecking=no ubuntu@3.0.50.73 << EOF
             set -e
-            
-            echo "=== 1. Gỡ các gói Docker cũ (nếu có) ==="
+
+            # 1) Gỡ Docker cũ (nếu có), cập nhật hệ thống
             sudo apt-get remove -y docker docker.io containerd runc docker-compose || true
-            sudo apt-get update
+            sudo apt-get update -y
 
-            echo "=== 2. Cài đặt Docker CE và Docker Compose Plugin ==="
+            # 2) Cài Docker CE & Docker Compose Plugin
             sudo apt-get install -y ca-certificates curl gnupg
-
-            # Thêm GPG key cho Docker
-            sudo install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-            # Thêm Docker repository
-            # Lưu ý: Nếu $(lsb_release -cs) bị sai, có thể thay bằng "jammy" (Ubuntu 22.04) hoặc phù hợp
-            echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-              https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable" \
+            sudo mkdir -p /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+              | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            echo "deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable" \
               | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update -y
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
+              docker-buildx-plugin docker-compose-plugin
 
-            sudo apt-get update
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-            echo "=== 3. Cài đặt Node.js (nếu chưa có) ==="
+            # 3) Cài Node.js 20 nếu chưa có
             if ! command -v node &> /dev/null; then
-              echo "Installing Node.js..."
               curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
               sudo apt-get install -y nodejs
             fi
 
-            echo "=== 4. Clone hoặc pull code từ repo ==="
+            # 4) Clone hoặc pull code
             cd ~
             if [ ! -d "Serverless-web" ]; then
               git clone https://github.com/imLeHuyHoang/Serverless-web.git
@@ -61,10 +54,8 @@ jobs:
               git pull origin main
             fi
 
-            echo "=== 5. Dừng và xóa container cũ (nếu có) ==="
+            # 5) Dừng container cũ và chạy container mới
             sudo docker compose down --volumes --remove-orphans || true
-
-            echo "=== 6. Build và chạy container mới ==="
             sudo docker compose up --build -d
 
             echo "Deployment completed!"
