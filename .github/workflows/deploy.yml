@@ -55,7 +55,7 @@ jobs:
             npm install
 
             # 5) Chạy npm run test 
-            npm run test
+            CI=true npm run test
 
             # 6) Kiểm tra xem docker hiện tại có đang chạy không, nếu có thì dừng lại
             if [ "$(docker ps -q)" ]; then
